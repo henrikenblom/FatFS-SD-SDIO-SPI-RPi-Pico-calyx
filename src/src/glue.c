@@ -1,16 +1,17 @@
 /* glue.c
 Copyright 2021 Carl John Kugler III
 
-Licensed under the Apache License, Version 2.0 (the License); you may not use 
-this file except in compliance with the License. You may obtain a copy of the 
+Licensed under the Apache License, Version 2.0 (the License); you may not use
+this file except in compliance with the License. You may obtain a copy of the
 License at
 
-   http://www.apache.org/licenses/LICENSE-2.0 
-Unless required by applicable law or agreed to in writing, software distributed 
-under the License is distributed on an AS IS BASIS, WITHOUT WARRANTIES OR 
-CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+   http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an AS IS BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 */
+/* Modified for Calyx OS: Added PSRAM bounce buffer support */
 /*-----------------------------------------------------------------------*/
 /* Low level disk I/O module SKELETON for FatFs     (C)ChaN, 2019        */
 /*-----------------------------------------------------------------------*/
@@ -26,9 +27,22 @@ specific language governing permissions and limitations under the License.
 #include "sd_card.h"
 //
 #include "diskio.h" /* Declarations of disk functions */
+#include <string.h>
+#include <stdint.h>
 
 #define TRACE_PRINTF(fmt, args...)
 //#define TRACE_PRINTF printf  // task_printf
+
+#define PSRAM_BASE 0x11000000
+#define PSRAM_END  0x11800000
+#define SECTOR_SIZE 512
+
+static uint8_t __attribute__((aligned(4))) bounce_buffer[SECTOR_SIZE];
+
+static inline int is_psram_address(const void *ptr) {
+    uintptr_t addr = (uintptr_t)ptr;
+    return addr >= PSRAM_BASE && addr < PSRAM_END;
+}
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
@@ -99,6 +113,18 @@ DRESULT disk_read(BYTE pdrv,  /* Physical drive number to identify the drive */
     TRACE_PRINTF(">>> %s\n", __FUNCTION__);
     sd_card_t *sd_card_p = sd_get_by_num(pdrv);
     if (!sd_card_p) return RES_PARERR;
+
+    if (is_psram_address(buff)) {
+        for (UINT i = 0; i < count; i++) {
+            int rc = sd_card_p->read_blocks(sd_card_p, bounce_buffer, sector + i, 1);
+            if (rc != SD_BLOCK_DEVICE_ERROR_NONE) {
+                return sdrc2dresult(rc);
+            }
+            memcpy(buff + i * SECTOR_SIZE, bounce_buffer, SECTOR_SIZE);
+        }
+        return RES_OK;
+    }
+
     int rc = sd_card_p->read_blocks(sd_card_p, buff, sector, count);
     return sdrc2dresult(rc);
 }
@@ -117,6 +143,18 @@ DRESULT disk_write(BYTE pdrv, /* Physical drive number to identify the drive */
     TRACE_PRINTF(">>> %s\n", __FUNCTION__);
     sd_card_t *sd_card_p = sd_get_by_num(pdrv);
     if (!sd_card_p) return RES_PARERR;
+
+    if (is_psram_address(buff)) {
+        for (UINT i = 0; i < count; i++) {
+            memcpy(bounce_buffer, buff + i * SECTOR_SIZE, SECTOR_SIZE);
+            int rc = sd_card_p->write_blocks(sd_card_p, bounce_buffer, sector + i, 1);
+            if (rc != SD_BLOCK_DEVICE_ERROR_NONE) {
+                return sdrc2dresult(rc);
+            }
+        }
+        return RES_OK;
+    }
+
     int rc = sd_card_p->write_blocks(sd_card_p, buff, sector, count);
     return sdrc2dresult(rc);
 }
