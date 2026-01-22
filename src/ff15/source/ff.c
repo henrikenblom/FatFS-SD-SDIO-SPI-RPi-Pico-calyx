@@ -20,6 +20,7 @@
 
 
 #include <string.h>
+#define CALYX_FATFS_ACCESS_ALLOWED
 #include "ff.h"			/* Declarations of FatFs API */
 #include "diskio.h"		/* Declarations of device I/O functions */
 

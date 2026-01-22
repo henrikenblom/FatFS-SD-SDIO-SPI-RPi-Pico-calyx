@@ -12,6 +12,7 @@
 //
 #include "pico/stdlib.h"
 //
+#define CALYX_FATFS_ACCESS_ALLOWED
 #include "ff.h"
 //
 #include "f_util.h"

@@ -2,6 +2,7 @@
 /* A Sample Code of User Provided OS Dependent Functions for FatFs        */
 /*------------------------------------------------------------------------*/
 
+#define CALYX_FATFS_ACCESS_ALLOWED
 #include "ff.h"
 
 

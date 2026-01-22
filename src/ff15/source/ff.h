@@ -22,6 +22,10 @@
 #ifndef FF_DEFINED
 #define FF_DEFINED	80286	/* Revision ID */
 
+#ifndef CALYX_FATFS_ACCESS_ALLOWED
+#error "Direct FatFS access is not allowed. Use VFS functions instead. If this is a legitimate kernel use, define CALYX_FATFS_ACCESS_ALLOWED before including ff.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

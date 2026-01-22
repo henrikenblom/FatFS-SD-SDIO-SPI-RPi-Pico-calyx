@@ -17,6 +17,7 @@ specific language governing permissions and limitations under the License.
 #include <stdlib.h>
 #include <string.h>
 //
+#define CALYX_FATFS_ACCESS_ALLOWED
 #include "ff.h"
 //
 #include "my_debug.h"

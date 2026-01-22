@@ -26,6 +26,7 @@ specific language governing permissions and limitations under the License.
 #include "hardware/gpio.h"
 #include "pico/mutex.h"
 //
+#define CALYX_FATFS_ACCESS_ALLOWED
 #include "ff.h"
 //
 #include "SDIO/rp2040_sdio.h"

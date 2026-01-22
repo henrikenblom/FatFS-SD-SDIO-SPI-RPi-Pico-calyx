@@ -5,6 +5,7 @@
 #ifndef _DISKIO_DEFINED
 #define _DISKIO_DEFINED
 
+#define CALYX_FATFS_ACCESS_ALLOWED
 #include "ff.h"
 
 #ifdef __cplusplus

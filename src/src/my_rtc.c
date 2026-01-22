@@ -24,6 +24,7 @@ specific language governing permissions and limitations under the License.
 #endif
 //
 #include "crc.h"
+#define CALYX_FATFS_ACCESS_ALLOWED
 #include "ff.h"
 //
 #include "my_rtc.h"
