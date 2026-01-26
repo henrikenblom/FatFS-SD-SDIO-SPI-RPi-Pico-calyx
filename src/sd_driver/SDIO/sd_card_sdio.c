@@ -23,6 +23,7 @@
 //
 #include "diskio.h"
 #include "my_debug.h"
+#include "sd_led.h"
 #include "delays.h"
 #include "rp2040_sdio.h"
 #include "rp2040_sdio.pio.h"  // build\build\rp2040_sdio.pio.h
@@ -595,6 +596,7 @@ static block_dev_err_t sd_sdio_write_blocks(sd_card_t *sd_card_p, const uint8_t 
     TRACE_PRINTF("%s(,,,%zu)\n", __func__, blockCnt);
     bool ok = true;
 
+    LED_PULSE();
     sd_lock(sd_card_p);
 
     if (1 == blockCnt)
@@ -613,6 +615,7 @@ static block_dev_err_t sd_sdio_read_blocks(sd_card_t *sd_card_p, uint8_t *buffer
                                            uint32_t ulSectorCount) {
     bool ok = true;
 
+    LED_PULSE();
     sd_lock(sd_card_p);
 
     if (1 == ulSectorCount)
