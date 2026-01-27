@@ -30,6 +30,13 @@
  * \return true for success or false for failure.
  */
 bool sd_sdio_begin(sd_card_t *sd_card_p);
+
+/** Reset the SD card to idle state by sending CMD0.
+ * Call this before initialization if the card may be in an unknown state
+ * (e.g., after a warm reboot where the card wasn't power-cycled).
+ */
+void sd_sdio_go_idle(sd_card_t *sd_card_p);
+
 /** CMD6 Switch mode: Check Function Set Function.
  * \param[in] arg CMD6 argument.
  * \param[out] status return status data.

@@ -91,6 +91,18 @@ static float calculate_clk_div(uint baud) {
     return div;
 }
 
+void sd_sdio_go_idle(sd_card_t *sd_card_p) {
+    rp2040_sdio_init(sd_card_p, calculate_clk_div(400 * 1000));
+
+    for (int i = 0; i < 10; i++) {
+        delay_ms(1);
+        rp2040_sdio_command_R1(sd_card_p, CMD0_GO_IDLE_STATE, 0, NULL);
+    }
+
+    sd_card_p->state.m_Status |= STA_NOINIT;
+    sd_card_p->state.card_type = SDCARD_NONE;
+}
+
 bool sd_sdio_begin(sd_card_t *sd_card_p)
 {
     uint32_t reply;
