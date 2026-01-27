@@ -94,6 +94,9 @@ static float calculate_clk_div(uint baud) {
 void sd_sdio_go_idle(sd_card_t *sd_card_p) {
     rp2040_sdio_init(sd_card_p, calculate_clk_div(400 * 1000));
 
+    rp2040_sdio_command_R1(sd_card_p, CMD12_STOP_TRANSMISSION, 0, NULL);
+    delay_ms(1);
+
     for (int i = 0; i < 10; i++) {
         delay_ms(1);
         rp2040_sdio_command_R1(sd_card_p, CMD0_GO_IDLE_STATE, 0, NULL);
@@ -107,18 +110,16 @@ bool sd_sdio_begin(sd_card_t *sd_card_p)
 {
     uint32_t reply;
     sdio_status_t status;
-    
-    // Initialize at 400 kHz clock speed
-    if (!rp2040_sdio_init(sd_card_p, calculate_clk_div(400 * 1000)))
-        return false; 
 
-    // Establish initial connection with the card
+    if (!rp2040_sdio_init(sd_card_p, calculate_clk_div(400 * 1000)))
+        return false;
+
     for (int retries = 0; retries < 5; retries++)
     {
         delay_ms(1);
         reply = 0;
-        rp2040_sdio_command_R1(sd_card_p, CMD0_GO_IDLE_STATE, 0, NULL); // GO_IDLE_STATE
-        status = rp2040_sdio_command_R1(sd_card_p, CMD8_SEND_IF_COND, 0x1AA, &reply); // SEND_IF_COND
+        rp2040_sdio_command_R1(sd_card_p, CMD0_GO_IDLE_STATE, 0, NULL);
+        status = rp2040_sdio_command_R1(sd_card_p, CMD8_SEND_IF_COND, 0x1AA, &reply);
 
         if (status == SDIO_OK && reply == 0x1AA)
         {
@@ -128,18 +129,15 @@ bool sd_sdio_begin(sd_card_t *sd_card_p)
 
     if (reply != 0x1AA || status != SDIO_OK)
     {
-        // azdbg("SDIO not responding to CMD8 SEND_IF_COND, status ", (int)status, " reply ", reply);
-        EMSG_PRINTF("%s,%d SDIO not responding to CMD8 SEND_IF_COND, status 0x%x reply 0x%lx\n", 
+        EMSG_PRINTF("%s,%d SDIO not responding to CMD8 SEND_IF_COND, status 0x%x reply 0x%lx\n",
             __func__, __LINE__, status, reply);
         return false;
     }
 
-    // Send ACMD41 to begin card initialization and wait for it to complete
     uint32_t start = millis();
     do {
-        if (!checkReturnOk(rp2040_sdio_command_R1(sd_card_p, CMD55_APP_CMD, 0, &reply)) || // APP_CMD
-            !checkReturnOk(rp2040_sdio_command_R3(sd_card_p, ACMD41_SD_SEND_OP_COND, 0xD0040000, &STATE.ocr))) // 3.0V voltage
-            // !checkReturnOk(rp2040_sdio_command_R1(sd_card_p, ACMD41, 0xC0100000, &STATE.ocr)))
+        if (!checkReturnOk(rp2040_sdio_command_R1(sd_card_p, CMD55_APP_CMD, 0, &reply)) ||
+            !checkReturnOk(rp2040_sdio_command_R3(sd_card_p, ACMD41_SD_SEND_OP_COND, 0xD0040000, &STATE.ocr)))
         {
             return false;
         }
